@@ -130,7 +130,7 @@ class split:
                 log = self.split_test_single(imagepath, r)
                 loginfos = loginfos + log
                 print(imagepath + '\t' + str(r) + ' : OK')
-        with open(os.path.join(self.save_dir, 'split'), "w", encoding="utf-8") as f:
+        with open(os.path.join(self.save_dir, 'split.json'), "w", encoding="utf-8") as f:
             json.dump(loginfos, f, ensure_ascii=False, indent=4)
         return
 
