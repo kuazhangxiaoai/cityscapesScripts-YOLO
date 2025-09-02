@@ -2,7 +2,7 @@ import json
 import os
 import cv2
 
-from cityscapesscripts.yolo.yoloutils import GetFileFromThisRootDir, get_main_name
+from cityscapesscripts.yolo.yoloutils import GetFileFromThisRootDir, get_main_name, get_image_name
 
 class split:
     def __init__(self, image_dir, anotation_dir, save_dir, img_size=1024, overlap=512, ratio=[1.0]):
@@ -25,7 +25,6 @@ class split:
         img = cv2.imread(imagepath)
         img = cv2.resize(img, (img.shape[0] * ratio, img.shape[1] * ratio)) if ratio != 1.0 else img
         name = get_main_name(imagepath)
-        anotation_name = get_main_name(anotationpath)
         anotation = cv2.imread(anotationpath)
         left, up = 0, 0
         width, height = img.shape[1], img.shape[0]
@@ -41,7 +40,7 @@ class split:
                 right = min(left + self.img_size, width)
                 down = min(up + self.img_size, height)
                 splitname_img = os.path.join(self.save_dir, 'image', f"{name}__{left}__{up}__{int(ratio * 10)}.png")
-                splitname_msk = os.path.join(self.save_dir, 'annotation', f"{anotation_name}__{left}__{up}__{int(ratio * 10)}.png")
+                splitname_msk = os.path.join(self.save_dir, 'annotation', f"{name}__{left}__{up}__{int(ratio * 10)}.png")
                 patch_img = img[up: down, left: right,:]
                 patch_msk = anotation[up: down, left: right, :]
                 cv2.imwrite(splitname_img, patch_img)
@@ -58,11 +57,11 @@ class split:
                     'down': down,
                     'resized': [img.shape[1], img.shape[0]]  #原图缩放后的尺寸
                 })
-                if(up + self.img_size >= height):
+                if(down >= height):
                     break
                 else:
                     up = up + slide
-            if (left + self.img_size >= width):
+            if (right >= width):
                 break
             else:
                 left = left + slide
@@ -98,11 +97,11 @@ class split:
                     'down': down,
                     'resized': [img.shape[1], img.shape[0]]  # 原图缩放后的尺寸
                 })
-                if (up + self.img_size >= height):
+                if (down >= height):
                     break
                 else:
                     up = up + slide
-            if (left + self.img_size >= width):
+            if (right >= width):
                 break
             else:
                 left = left + slide
@@ -110,10 +109,13 @@ class split:
 
     def run(self):
         images = GetFileFromThisRootDir(self.img_dir)
-        anotats = GetFileFromThisRootDir(self.anotation_dir)
-        anotats = self.file_name_filter(anotats, '_color')
+        #anotats = GetFileFromThisRootDir(self.anotation_dir)
+        #anotats = self.file_name_filter(anotats, '_color')
+        # '/media/yanggang/847C02507C023D84/CityEscape/gtFine_trainvaltest/gtFine/train/aachen/aachen_000074_000019_gtFine_instanceIds.png'
+        # '/media/yanggang/847C02507C023D84/CityEscape/leftImg8bit_trainvaltest/leftImg8bit/train/aachen/aachen_000000_000019_leftImg8bit.png'
+        annotations = [imagename.replace('leftImg8bit_trainvaltest', 'gtFine_trainvaltest').replace('leftImg8bit.png', 'gtFine_color.png').replace('leftImg8bit','gtFine') for imagename in images]
         loginfos = []
-        for imagepath, maskpath in zip(images, anotats):
+        for imagepath, maskpath in zip(images, annotations):
             for r in self.ratio:
                 log = self.split_single(imagepath, maskpath, r)
                 loginfos = loginfos + log
